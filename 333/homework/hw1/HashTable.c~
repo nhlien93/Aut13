@@ -319,29 +319,53 @@ void HTIteratorFree(HTIter iter) {
 
 int HTIteratorNext(HTIter iter) {
   Assert333(iter != NULL);
+  Assert333(iter->bucket_it != NULL);
+  if (HTIteratorPastEnd(iter) == 1){
+    return 0;
+  }
+  // Step 4 -- implement HTIteratorNext
+  // if bucket still has a keyvalue next
 
-  // Step 4 -- implement HTIteratorNext.
-
-
-  return 0;  // you might need to change this return value.
+  if (LLIteratorNext(iter->bucket_it)) {
+    return 1;
+  }
+  LLIteratorFree(iter->bucket_it);
+  LinkedList * buckets = iter->ht->buckets;
+  do {
+    iter->bucket_num++;
+  } while (iter->bucket_num < iter->ht->num_buckets
+           && NumElementsInLinkedList(buckets[iter->bucket_num]) <= 0);
+  if (iter->bucket_num >= iter->ht->num_buckets) {
+    iter->is_valid = false;
+    return 0;
+  }
+  iter->bucket_it = LLMakeIterator(buckets[iter->bucket_num], 0UL);
+  if (iter->bucket_it == NULL) {
+    iter->is_valid = false;
+    // out of memory!
+    return 0;
+  }  
+  return 1;
 }
 
 int HTIteratorPastEnd(HTIter iter) {
   Assert333(iter != NULL);
-
   // Step 5 -- implement HTIteratorPastEnd.
-
-
-  return 0;  // you might need to change this return value.
+  return (iter->is_valid) ? 0 : 1;
 }
 
 int HTIteratorGet(HTIter iter, HTKeyValue *keyvalue) {
   Assert333(iter != NULL);
 
   // Step 6 -- implement HTIteratorGet.
-
-
-  return 0;  // you might need to change this return value.
+  if (!iter->is_valid) {
+    return 0;
+  }
+  // iter is valid so return the current keyvalue
+  HTKeyValue *currKeyValue;
+  LLIteratorGetPayload(iter->bucket_it, (void**) &currKeyValue);
+  *keyvalue = *currKeyValue;
+  return 1;
 }
 
 int HTIteratorDelete(HTIter iter, HTKeyValue *keyvalue) {

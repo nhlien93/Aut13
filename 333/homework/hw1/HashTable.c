@@ -319,29 +319,54 @@ void HTIteratorFree(HTIter iter) {
 
 int HTIteratorNext(HTIter iter) {
   Assert333(iter != NULL);
-
-  // Step 4 -- implement HTIteratorNext.
-
-
-  return 0;  // you might need to change this return value.
+  Assert333(iter->bucket_it != NULL);
+  if (HTIteratorPastEnd(iter) == 1){
+    return 0;
+  }
+  // Step 4 -- implement HTIteratorNext
+  // if bucket still has a keyvalue next
+  LinkedList bucket;
+  if (LLIteratorNext(iter->bucket_it)) {
+    return 1;
+  }
+  LLIter prev_bucket_iter = iter->bucket_it;
+  do {
+    iter->bucket_num++;
+    bucket = iter->ht->buckets[iter->bucket_num];
+  } while (iter->bucket_num < iter->ht->num_buckets
+           && NumElementsInLinkedList(bucket) <= 0);
+  if (iter->bucket_num >= iter->ht->num_buckets) {
+    iter->is_valid = false;
+    return 0;
+  }
+  iter->bucket_it = LLMakeIterator(bucket, 0UL);
+  LLIteratorFree(prev_bucket_iter);
+  if (iter->bucket_it == NULL) {
+    iter->is_valid = false;
+    // out of memory!
+    return 0;
+  }  
+  return 1;
 }
 
 int HTIteratorPastEnd(HTIter iter) {
   Assert333(iter != NULL);
-
   // Step 5 -- implement HTIteratorPastEnd.
-
-
-  return 0;  // you might need to change this return value.
+  return (iter->is_valid) ? 0 : 1;
 }
 
 int HTIteratorGet(HTIter iter, HTKeyValue *keyvalue) {
   Assert333(iter != NULL);
 
   // Step 6 -- implement HTIteratorGet.
-
-
-  return 0;  // you might need to change this return value.
+  if (!iter->is_valid) {
+    return 0;
+  }
+  // iter is valid so return the current keyvalue
+  HTKeyValue *currKeyValue;
+  LLIteratorGetPayload(iter->bucket_it, (void**) &currKeyValue);
+  *keyvalue = *currKeyValue;
+  return 1;
 }
 
 int HTIteratorDelete(HTIter iter, HTKeyValue *keyvalue) {
@@ -397,7 +422,7 @@ static void ResizeHashtable(HashTable ht) {
   while (!HTIteratorPastEnd(it)) {
     HTKeyValue item, dummy;
 
-    // commenting for now rememeber to change this back!!!! Assert333(HTIteratorGet(it, &item) == 1);
+    Assert333(HTIteratorGet(it, &item) == 1);
     if (InsertHashTable(newht, item, &dummy) != 1) {
       // failure, free up everything, return.
       HTIteratorFree(it);
