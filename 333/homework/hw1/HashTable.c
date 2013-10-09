@@ -176,7 +176,7 @@ static int FindAndMaybeDeleteHashTable(LinkedList chain,
     if (currKeyValue->key == key) {
       *keyvalueptr = currKeyValue;
       if (delete)
-        LLIteratorDelete(iter, &NullFree); // don't want to actually free memory 
+        LLIteratorDelete(iter, &free);
       LLIteratorFree(iter);
       return 1;
     } 
